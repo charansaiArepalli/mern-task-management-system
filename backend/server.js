@@ -15,11 +15,6 @@ app.use("/api/tasks", require("./routes/taskRoutes"));
 app.use("/api/users", require("./routes/userRoutes"));
 const { protect } = require("./middleware/authMiddleware");
 
-const cors = require("cors");
-
-app.use(cors());
-app.use(express.json());
-
 
 app.get("/api/protected", protect, (req, res) => {
   res.json({
