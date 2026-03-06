@@ -28,7 +28,7 @@ router.get(
 router.put(
   "/:id",
   protect,
-  authorizeRoles("employee", "manager"),
+  authorizeRoles("employee"),
   updateTaskStatus
 );
 
