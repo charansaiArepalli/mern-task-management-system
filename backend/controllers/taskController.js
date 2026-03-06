@@ -1,106 +1,101 @@
 const Task = require("../models/Task");
 
+// CREATE TASK
 exports.createTask = async (req, res) => {
+try {
+const { title, description, projectId, assignedTo } = req.body;
 
-  try {
+const task = await Task.create({
+  title,
+  description,
+  projectId,
+  assignedTo,
+  assignedBy: req.user._id,
+  status: "todo"
+});
 
-    const { title, description, projectId, assignedTo } = req.body;
+res.status(201).json(task);
 
-    const task = await Task.create({
-      title,
-      description,
-      projectId,
-      assignedTo,
-      assignedBy: req.user._id,
-      status: "todo"
-    });
 
-    res.status(201).json(task);
-
-  } catch (error) {
-
-    console.error(error);
-    res.status(500).json({ message: "Error creating task" });
-
-  }
+} catch (error) {
+console.error(error);
+res.status(500).json({ message: "Error creating task" });
+}
 };
+
+// GET TASKS ASSIGNED TO LOGGED-IN EMPLOYEE
 exports.getMyTasks = async (req, res) => {
-  const tasks = await Task.find({ assignedTo: req.user._id });
-  res.json(tasks);
-  };
+try {
+
+
+const tasks = await Task.find({ assignedTo: req.user._id })
+  .populate("projectId", "title");
+
+res.json(tasks);
+
+
+} catch (error) {
+console.error(error);
+res.status(500).json({ message: "Error fetching tasks" });
+}
+};
+
+// UPDATE TASK STATUS (EMPLOYEE)
 exports.updateTaskStatus = async (req, res) => {
-  const { status } = req.body;
+try {
 
-  const task = await Task.findById(req.params.id);
 
-  if (!task) {
-    return res.status(404).json({ message: "Task not found" });
-  }
+const task = await Task.findById(req.params.id);
 
-  // Only assigned employee can update
- exports.updateTaskStatus = async (req, res) => {
+if (!task) {
+  return res.status(404).json({ message: "Task not found" });
+}
 
-  try {
+// Ensure only assigned employee can update
+if (task.assignedTo.toString() !== req.user._id.toString()) {
+  return res.status(403).json({ message: "Not allowed to update this task" });
+}
 
-    const task = await Task.findById(req.params.id);
+task.status = req.body.status;
 
-    if (!task) {
-      return res.status(404).json({ message: "Task not found" });
-    }
+await task.save();
 
-    // check if employee is assigned to this task
-    const isAssigned = task.assignedTo.some(
-      (userId) => userId.toString() === req.user._id.toString()
-    );
+res.json(task);
 
-    if (!isAssigned) {
-      return res.status(403).json({ message: "Not allowed to update this task" });
-    }
 
-    task.status = req.body.status;
-
-    await task.save();
-
-    res.json(task);
-
-  } catch (error) {
-
-    console.error(error);
-    res.status(500).json({ message: "Server error" });
-
-  }
- }
+} catch (error) {
+console.error(error);
+res.status(500).json({ message: "Server error while updating task" });
+}
 };
 
+// GET ALL TASKS (ADMIN / MANAGER)
 exports.getAllTasks = async (req, res) => {
+try {
 
-  const tasks = await Task.find()
-    .populate("assignedTo", "name")
-    .populate("projectId", "title");
 
-  res.json(tasks);
+const tasks = await Task.find()
+  .populate("assignedTo", "name")
+  .populate("projectId", "title");
 
+res.json(tasks);
+
+
+} catch (error) {
+console.error(error);
+res.status(500).json({ message: "Error fetching tasks" });
+}
 };
 
-exports.getAllTasks = async (req, res) => {
-  try {
-
-    const tasks = await Task.find()
-      .populate("assignedTo", "name")
-      .populate("projectId", "title");
-
-    res.json(tasks);
-
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({ message: "Error fetching tasks" });
-  }
-};
 
 exports.deleteTask = async (req, res) => {
+try {
 
-  await Task.findByIdAndDelete(req.params.id);
+await Task.findByIdAndDelete(req.params.id);
+res.json({ message: "Task deleted" });
 
-  res.json({ message: "Task deleted" });
-
+} catch (error) {
+console.error(error);
+res.status(500).json({ message: "Error deleting task" });
+}
 };
