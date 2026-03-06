@@ -23,7 +23,9 @@ app.get("/api/protected", protect, (req, res) => {
   });
 });
 
-mongoose.connect(process.env.MONGO_URI)
+mongoose.connect(process.env.MONGO_URI, {
+  dbName: "task-system"
+})
   .then(() => console.log("MongoDB Connected"))
   .catch(err => console.log(err));
 
