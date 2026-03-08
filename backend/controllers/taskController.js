@@ -52,7 +52,7 @@ if (!task) {
 }
 
 // Ensure only assigned employee can update
-if (task.assignedTo.toString() !== req.user._id.toString()) {
+if (!task.assignedTo.includes(req.user._id)) {
   return res.status(403).json({ message: "Not allowed to update this task" });
 }
 
